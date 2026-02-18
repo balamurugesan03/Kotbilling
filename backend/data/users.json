@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "name": "Admin User",
+    "username": "admin",
+    "password": "PLAIN:admin123",
+    "role": "admin",
+    "email": "admin@restaurant.com",
+    "isActive": true,
+    "createdAt": "2026-02-17T19:54:52.032Z"
+  },
+  {
+    "id": "2",
+    "name": "Waiter One",
+    "username": "waiter",
+    "password": "PLAIN:waiter123",
+    "role": "waiter",
+    "email": "waiter@restaurant.com",
+    "isActive": true,
+    "createdAt": "2026-02-17T19:54:52.033Z"
+  }
+]
