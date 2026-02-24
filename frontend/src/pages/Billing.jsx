@@ -35,13 +35,14 @@ import { OrderStatusBadge } from '../components/common/StatusBadge';
 import { PAYMENT_METHODS } from '../utils/constants';
 import NumPad from '../components/common/NumPad';
 import { useSettings } from '../context/SettingsContext';
+import { printReceipt } from '../utils/printReceipt';
 
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000];
 
 const Billing = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { calculateTaxes } = useSettings();
+  const { calculateTaxes, billingSettings, restaurantSettings } = useSettings();
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.CASH);
   const [paymentModalOpened, { open: openPaymentModal, close: closePaymentModal }] = useDisclosure(false);
   const [amountReceived, setAmountReceived] = useState('');
@@ -79,6 +80,25 @@ const Billing = () => {
   const canComplete =
     paymentMethod !== PAYMENT_METHODS.CASH ||
     (amountReceived && parseFloat(amountReceived) >= (grandTotal || 0));
+
+  const handlePrintBill = useCallback(() => {
+    if (!order) return;
+    printReceipt({
+      order,
+      taxDetails,
+      restaurantSettings,
+      paymentMethod,
+      amountReceived,
+    });
+  }, [order, taxDetails, restaurantSettings, paymentMethod, amountReceived]);
+
+  // Auto-print after payment if enabled in settings
+  useEffect(() => {
+    if (paymentComplete && order && billingSettings.printBillAutomatically) {
+      handlePrintBill();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentComplete]);
 
   const handlePayment = useCallback(() => {
     if (!canComplete || paymentMutation.isPending) return;
@@ -158,6 +178,13 @@ const Billing = () => {
         return;
       }
 
+      // F7 = Print Bill (manual)
+      if (e.key === 'F7') {
+        e.preventDefault();
+        if (order) handlePrintBill();
+        return;
+      }
+
       // F8 = Print KOT
       if (e.key === 'F8') {
         e.preventDefault();
@@ -177,6 +204,7 @@ const Billing = () => {
     closePaymentModal,
     handlePayment,
     handleSetExactAmount,
+    handlePrintBill,
   ]);
 
   // Fetch all active orders when no specific order is selected
@@ -302,6 +330,14 @@ const Billing = () => {
           </Group>
         </div>
         <Group>
+          <Button
+            variant="light"
+            color="blue"
+            leftSection={<IconPrinter size={18} />}
+            onClick={handlePrintBill}
+          >
+            Print Bill {!isMobile && <Text span size="xs" c="dimmed" ml={4}>[F7]</Text>}
+          </Button>
           <Button variant="light" leftSection={<IconPrinter size={18} />}>
             Print KOT {!isMobile && <Text span size="xs" c="dimmed" ml={4}>[F8]</Text>}
           </Button>
@@ -457,6 +493,7 @@ const Billing = () => {
             <Group gap={4}><Kbd size="xs">F2</Kbd><Text size="xs" c="dimmed">Card</Text></Group>
             <Group gap={4}><Kbd size="xs">F3</Kbd><Text size="xs" c="dimmed">UPI</Text></Group>
             <Group gap={4}><Kbd size="xs">F5</Kbd><Text size="xs" c="dimmed">Exact Amt</Text></Group>
+            <Group gap={4}><Kbd size="xs">F7</Kbd><Text size="xs" c="dimmed">Print Bill</Text></Group>
             <Group gap={4}><Kbd size="xs">F8</Kbd><Text size="xs" c="dimmed">Print KOT</Text></Group>
             <Group gap={4}><Kbd size="xs">F9</Kbd><Text size="xs" c="dimmed">Pay</Text></Group>
             <Group gap={4}><Kbd size="xs">Enter</Kbd><Text size="xs" c="dimmed">Confirm</Text></Group>
@@ -485,6 +522,15 @@ const Billing = () => {
             <IconCheck size={64} color="green" />
             <Title order={3}>Payment Successful!</Title>
             <Text c="dimmed">Redirecting to tables...</Text>
+            <Button
+              variant="light"
+              color="blue"
+              leftSection={<IconPrinter size={18} />}
+              onClick={handlePrintBill}
+              mt="sm"
+            >
+              Print Receipt
+            </Button>
           </Stack>
         ) : (
           <Stack>

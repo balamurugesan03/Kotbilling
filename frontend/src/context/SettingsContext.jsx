@@ -10,7 +10,7 @@ const DEFAULT_BILLING_SETTINGS = {
   enableGst: true,
   enableServiceCharge: true,
   printKotAutomatically: true,
-  printBillAutomatically: false,
+  printBillAutomatically: true,
 };
 
 const DEFAULT_RESTAURANT_SETTINGS = {
